@@ -74,7 +74,10 @@ export default {
       information: null,
       search_way: 'steamid',
       current_page: 1,
-      page_size: 15
+      page_size: 15,
+      timelist: null,
+      valuelist: null,
+      currentItem: null
     }
   },
   methods: {
@@ -84,29 +87,76 @@ export default {
         row.expanding = false
       } else if (row.expanding === false) {
         row.expanding = true
+        this.search_price(row)
+        this.currentItem = row
+        this.valuelist = null
+        this.timelist = null
       } else {
         console.log('not find expand data')
         row.expanding = true
-        this.$nextTick(() => { this.drawLine(row) })
+        this.search_price(row)
+        this.currentItem = row
+        this.valuelist = null
+        this.timelist = null
+        // this.$nextTick(() => {
+        //   this.search_price(row.steamid)
+        //   this.drawLine(row)
+        // })
       }
+    },
+    search_price (row) {
+      var priceParam = new URLSearchParams()
+      priceParam.append('flag', '1')
+      priceParam.append('steamid', row.steamid)
+      priceParam.append('part', this.$route.params.part)
+      this.$axios({
+        method: 'post',
+        url: '/api/block.php',
+        data: priceParam,
+        timeout: 3000
+      }).then(res => {
+        // console.log(res)
+        if (res.data.length === 0) {
+          var date = new Date()
+          this.valuelist = [parseFloat(row.cprice), parseFloat(row.cprice)]
+          this.timelist = ['begin', this.getTime(date)]
+          return
+        }
+        for (var i = 0; i < res.data.length; i++) {
+          this.valuelist.push(res.data[i].price)
+          this.timelist.push(res.data[i].time)
+        }
+      }).catch((error) => {
+        console.log(error)
+      })
     },
     drawLine (item) {
       // 基于准备好的dom，初始化echarts实例
+      // console.log(this.valuelist)
+      // console.log(this.timelist)
       // console.log(itemName)
       // console.log(this.$refs['gameChart' + itemName])
-      let myChart = this.$echarts.init(document.getElementById('gameChart' + item.name))
+      try {
+        var target = document.getElementById('gameChart' + item.name)
+        if (target == null) { return }
+      } catch (e) {
+        console.log(e)
+        return
+      }
+      let myChart = this.$echarts.init(target)
       // 绘制图表
       myChart.setOption({
         title: { text: '价格浮动表' },
         tooltip: {},
         xAxis: {
-          data: ['衬衫', '羊毛衫', '雪纺衫', '裤子', '高跟鞋', '袜子']
+          data: this.timelist
         },
         yAxis: {},
         series: [{
-          name: '销量',
-          type: 'bar',
-          data: [5, 20, 36, 10, 10, 20]
+          name: '价格',
+          type: 'line',
+          smooth: true,
+          data: this.valuelist
         }]
       })
     },
@@ -161,6 +211,19 @@ export default {
       } else {
         return true
       }
+    },
+    getTime (date) {
+      let y = date.getFullYear()
+      let MM = date.getMonth() + 1
+      MM = MM < 10 ? ('0' + MM) : MM
+      let d = date.getDate()
+      d = d < 10 ? ('0' + d) : d
+      return y + '-' + MM + '-' + d
+    }
+  },
+  watch: {
+    timelist () {
+      this.drawLine(this.currentItem)
     }
   }
 }
