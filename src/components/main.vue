@@ -21,9 +21,7 @@
                 <el-aside>
                   <el-col :span="1"><el-tag v-for="i in information.row.tags" :key="i">{{i}}</el-tag></el-col>
                 </el-aside>
-                <el-main>
-                  <div :id="'gameChart'+information.row.name" :index="'gameChart'+information.row.name" :style="{width: '300px', height: '200px'}"></div>
-                </el-main>
+                <el-main :id="'gameChart'+information.row.name" :index="'gameChart'+information.row.name" :style="{height: '300px'}"></el-main>
               </el-container>
             </template>
           </el-table-column>
@@ -75,8 +73,8 @@ export default {
       search_way: 'steamid',
       current_page: 1,
       page_size: 15,
-      timelist: null,
-      valuelist: null,
+      timelist: [],
+      valuelist: [],
       currentItem: null
     }
   },
@@ -89,15 +87,15 @@ export default {
         row.expanding = true
         this.search_price(row)
         this.currentItem = row
-        this.valuelist = null
-        this.timelist = null
+        this.valuelist = []
+        this.timelist = []
       } else {
         console.log('not find expand data')
         row.expanding = true
         this.search_price(row)
         this.currentItem = row
-        this.valuelist = null
-        this.timelist = null
+        this.valuelist = []
+        this.timelist = []
         // this.$nextTick(() => {
         //   this.search_price(row.steamid)
         //   this.drawLine(row)
@@ -118,14 +116,21 @@ export default {
         // console.log(res)
         if (res.data.length === 0) {
           var date = new Date()
-          this.valuelist = [parseFloat(row.cprice), parseFloat(row.cprice)]
+          this.valuelist = [parseFloat(row.oprice), parseFloat(row.cprice)]
           this.timelist = ['begin', this.getTime(date)]
           return
         }
-        for (var i = 0; i < res.data.length; i++) {
-          this.valuelist.push(res.data[i].price)
-          this.timelist.push(res.data[i].time)
+        var data = res.data
+        this.valuelist.push(parseFloat(this.currentItem.oprice))
+        this.timelist.push('begin')
+        for (var i = 0; i < data.length; i++) {
+          // console.log(data[i])
+          // console.log(data[i].price)
+          this.valuelist.push(parseFloat(data[i].price))
+          this.timelist.push(data[i].date.split(' ')[0].toString())
         }
+        // console.log(this.valuelist)
+        // console.log(this.timelist)
       }).catch((error) => {
         console.log(error)
       })
@@ -149,9 +154,30 @@ export default {
         title: { text: '价格浮动表' },
         tooltip: {},
         xAxis: {
+          axisLabel: {
+            interval: 0,
+            rotate: 30
+          },
+          type: 'category',
           data: this.timelist
         },
-        yAxis: {},
+        yAxis: {
+          show: true,
+          type: 'value',
+          splitLine: {show: false}, // 去除网格线
+          nameTextStyle: {
+            color: '#abb8ce'
+          },
+          axisLabel: {
+            color: '#abb8ce'
+          },
+          axisTick: { // y轴刻度线
+            show: false
+          },
+          axisLine: { // y轴
+            show: false
+          }
+        },
         series: [{
           name: '价格',
           type: 'line',

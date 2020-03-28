@@ -8,7 +8,11 @@ import echarts from 'echarts'
 const Vue = require('vue')
 
 Vue.prototype.$echarts = echarts
+// Vue.prototype.$echarts = require('echarts/lib/echarts')
 Vue.config.productionTip = false
+
+// require('echarts/lib/component/title')
+// require('echarts/lib/chart/line')
 
 /* eslint-disable no-new */
 new Vue({

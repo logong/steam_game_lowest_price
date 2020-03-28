@@ -93,6 +93,7 @@ module.exports = {
     'vue': 'Vue',
     'vue-router': 'VueRouter',
     'axios': 'axios',
-    'element-ui': 'Element'
+    'element-ui': 'Element',
+    'echarts': 'echarts'
   }
 }
